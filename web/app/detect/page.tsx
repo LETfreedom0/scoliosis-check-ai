@@ -97,6 +97,7 @@ export default function DetectPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [analysisType, setAnalysisType] = useState<'photo' | 'xray'>('photo');
@@ -115,10 +116,11 @@ export default function DetectPage() {
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('请上传图片文件');
+      setError('请上传图片文件');
       return;
     }
     setFile(file);
+    setError(null);
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target?.result as string);
@@ -169,6 +171,7 @@ export default function DetectPage() {
     if (!preview) return;
     setShowConfirm(false);
     setLoading(true);
+    setError(null);
 
     try {
       const result = await analyzeImageWithAI(preview, undefined, analysisType);
@@ -180,13 +183,62 @@ export default function DetectPage() {
       router.push('/result');
     } catch (error: any) {
       console.error(error);
-      alert(t('api_error') + error.message);
+      if (error.message && (error.message.includes('Failed to parse AI response') || error.message.includes('Invalid response structure'))) {
+        setError(t('api_error'));
+      } else {
+        setError(t('api_error') + error.message);
+      }
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-7xl">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gray-50/50 isolate">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* 1. Base Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 via-white to-white" />
+        
+        {/* 2. Grid Pattern */}
+        <svg className="absolute inset-0 h-full w-full opacity-[0.5]" aria-hidden="true">
+          <defs>
+            <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M.5 40V.5H40" fill="none" stroke="currentColor" className="text-gray-200" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+          <mask id="fade-bottom">
+            <linearGradient id="gradient-fade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" />
+              <stop offset="80%" stopColor="white" />
+              <stop offset="100%" stopColor="black" />
+            </linearGradient>
+          </mask>
+        </svg>
+
+        {/* 3. Abstract Spine/Medical Curves */}
+        <div className="absolute right-0 top-0 h-full w-full md:w-2/3 opacity-10 transform translate-x-1/4">
+            <svg viewBox="0 0 200 200" preserveAspectRatio="none" className="h-full w-full">
+              <path d="M100 0 C120 40, 80 80, 100 120 C120 160, 80 200, 100 240" stroke="#2c7a7b" strokeWidth="3" fill="none" vectorEffect="non-scaling-stroke" />
+              <path d="M60 0 C80 40, 40 80, 60 120 C80 160, 40 200, 60 240" stroke="#2c7a7b" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.4" />
+              <path d="M140 0 C160 40, 120 80, 140 120 C160 160, 120 200, 140 240" stroke="#2c7a7b" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.4" />
+            </svg>
+        </div>
+
+        {/* 4. Ambient Blurs */}
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-[#e6fffa] rounded-full blur-[80px] opacity-70 mix-blend-multiply" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-50 rounded-full blur-[80px] opacity-70 mix-blend-multiply" />
+        
+        {/* 5. Medical Symbols */}
+        <div className="absolute top-24 left-[5%] text-gray-200 animate-pulse" style={{ animationDuration: '4s' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div className="absolute bottom-32 right-[10%] text-gray-200 animate-pulse" style={{ animationDuration: '5s' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12 max-w-7xl relative z-10">
       <div className="text-center mb-16 relative">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#2c7a7b] opacity-5 rounded-full blur-3xl pointer-events-none"></div>
         <h1 className="text-4xl md:text-5xl font-bold text-[#2c7a7b] mb-6 relative z-10 tracking-tight">{t('detect_title')}</h1>
@@ -270,6 +322,13 @@ export default function DetectPage() {
               )}
             </div>
 
+            {error && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 animate-fade-in-up">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-red-600 text-sm leading-relaxed">{error}</p>
+              </div>
+            )}
+
             {preview && (
               <div className="mt-8 animate-fade-in-up">
                 <Button 
@@ -301,7 +360,9 @@ export default function DetectPage() {
               <div className="bg-[#e6fffa] p-3 rounded-2xl shadow-sm">
                 {analysisType === 'photo' ? <Camera className="h-6 w-6 text-[#2c7a7b]" /> : <Scan className="h-6 w-6 text-[#2c7a7b]" />}
               </div>
-              <h3 className="font-bold text-2xl text-gray-800 tracking-tight">{t('sample_title')}</h3>
+              <h3 className="font-bold text-2xl text-gray-800 tracking-tight">
+                {analysisType === 'photo' ? t('sample_title') : t('sample_title_xray')}
+              </h3>
             </div>
 
             <div className="flex-grow flex flex-col gap-6">
@@ -340,7 +401,45 @@ export default function DetectPage() {
               ) : (
                 <div className="group p-0 rounded-2xl hover:bg-gray-50 transition-all duration-300 overflow-hidden border border-transparent hover:border-gray-100 hover:shadow-lg flex-1 flex flex-col">
                   <div className="h-60 w-full bg-[#f8fafc] flex items-center justify-center p-4 group-hover:bg-white transition-colors">
-                    <Scan className="w-24 h-24 text-gray-300" />
+                    {/* Medical Imaging SVG */}
+                    <svg viewBox="0 0 200 240" className="w-full h-full max-h-[220px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      {/* X-ray Film Background */}
+                      <rect x="40" y="10" width="120" height="220" rx="4" fill="#1a202c" stroke="#4a5568" strokeWidth="2" />
+                      
+                      {/* Spine Structure - Ghostly White */}
+                      <g className="animate-pulse-slow" opacity="0.9">
+                        {/* Cervical */}
+                        <path d="M100 25C95 25 95 30 100 30C105 30 105 25 100 25" fill="#e2e8f0" opacity="0.8"/>
+                        <path d="M100 32C94 32 94 38 100 38C106 38 106 32 100 32" fill="#e2e8f0" opacity="0.8"/>
+                        
+                        {/* Thoracic - Mild Curve Suggestion */}
+                        <path d="M100 45C92 45 92 55 100 55C108 55 108 45 100 45" fill="#e2e8f0" opacity="0.7"/>
+                        <path d="M101 58C93 58 93 68 101 68C109 68 109 58 101 58" fill="#e2e8f0" opacity="0.7"/>
+                        <path d="M102 71C94 71 94 81 102 81C110 81 110 71 102 71" fill="#e2e8f0" opacity="0.7"/>
+                        
+                        {/* Lumbar */}
+                        <path d="M100 100C90 100 90 115 100 115C110 115 110 100 100 100" fill="#e2e8f0" opacity="0.9"/>
+                        <path d="M99 118C89 118 89 133 99 133C109 133 109 118 99 118" fill="#e2e8f0" opacity="0.9"/>
+                        <path d="M98 136C88 136 88 151 98 151C108 151 108 136 98 136" fill="#e2e8f0" opacity="0.9"/>
+                        
+                        {/* Pelvis Hint */}
+                        <path d="M70 160C70 160 85 180 100 180C115 180 130 160 130 160" stroke="#e2e8f0" strokeWidth="4" strokeLinecap="round" opacity="0.6"/>
+                      </g>
+
+                      {/* Cobb Angle Measurement Lines - Overlay */}
+                      <g className="animate-draw">
+                        <line x1="60" y1="50" x2="140" y2="60" stroke="#fbbf24" strokeWidth="1" strokeDasharray="4 2" />
+                        <line x1="60" y1="130" x2="140" y2="120" stroke="#fbbf24" strokeWidth="1" strokeDasharray="4 2" />
+                        {/* Angle Arc */}
+                        <path d="M130 60Q150 90 130 120" stroke="#fbbf24" strokeWidth="1" fill="none" opacity="0.8"/>
+                        <text x="145" y="95" fill="#fbbf24" fontSize="10" fontFamily="sans-serif">Cobb</text>
+                      </g>
+                      
+                      <style>{`
+                        .animate-pulse-slow { animation: pulse-slow 4s infinite ease-in-out; }
+                        @keyframes pulse-slow { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+                      `}</style>
+                    </svg>
                   </div>
                   <div className="p-5 flex-grow">
                     <div className="flex items-center gap-3 mb-2">
@@ -392,6 +491,7 @@ export default function DetectPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
