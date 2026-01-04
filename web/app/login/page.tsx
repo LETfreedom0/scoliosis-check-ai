@@ -16,45 +16,48 @@ export default function LoginPage() {
     email: '',
     password: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.password || (!isLogin && !formData.name)) {
       alert(t('error_fill_all'));
       return;
     }
 
-    if (isLogin) {
-      // Login Logic
-      // In a real app, you would verify against a backend.
-      // Here we simulate checking against local storage (which AuthContext handles roughly)
-      // BUT AuthContext's login just sets the user. We need to verify credentials first.
-      
-      const USERS_KEY = 'scoliosis_users';
-      const usersJson = localStorage.getItem(USERS_KEY);
-      const users = usersJson ? JSON.parse(usersJson) : [];
-      const user = users.find((u: any) => u.email === formData.email);
+    setLoading(true);
 
-      if (user && user.password === formData.password) {
-        login(user);
-        alert(t('login_success'));
-        router.push('/');
+    try {
+      if (isLogin) {
+        // Login Logic
+        const { error } = await login(formData);
+        
+        if (error) {
+          console.error(error);
+          alert(error.message || t('error_user_not_found'));
+        } else {
+          router.push('/');
+        }
       } else {
-        alert(t('error_user_not_found'));
+        // Register Logic
+        const { error } = await register(formData);
+        if (error) {
+          console.error(error);
+          alert(error.message || t('error_user_exists'));
+        } else {
+          alert(t('register_success'));
+          setIsLogin(true);
+        }
       }
-    } else {
-      // Register Logic
-      const success = register(formData);
-      if (success) {
-        alert(t('register_success'));
-        setIsLogin(true);
-      } else {
-        alert(t('error_user_exists'));
-      }
+    } catch (err) {
+      console.error(err);
+      alert('An unexpected error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,8 +120,8 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <Button type="submit" className="w-full">
-              {isLogin ? t('btn_login') : t('btn_register')}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Processing...' : (isLogin ? t('btn_login') : t('btn_register'))}
             </Button>
           </div>
         </form>
@@ -127,6 +130,7 @@ export default function LoginPage() {
           <button
             onClick={() => setIsLogin(!isLogin)}
             className="font-medium text-[#2c7a7b] hover:text-[#319795]"
+            disabled={loading}
           >
             {isLogin ? t('switch_to_register') : t('switch_to_login')}
           </button>

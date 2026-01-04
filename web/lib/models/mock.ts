@@ -1,6 +1,12 @@
-import { AnalysisResult, ModelInput, ModelProvider } from './types';
+import { AnalysisResult, ModelInput, ModelProvider, ChatMessage } from './types';
 
 export class MockProvider implements ModelProvider {
+  async chat(messages: ChatMessage[]): Promise<string> {
+    console.warn('Using MockProvider for chat');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return "这是一个模拟的 AI 回复。当前使用的是 Mock 模式。";
+  }
+
   async analyzeImage(input: ModelInput): Promise<AnalysisResult> {
     console.warn('Using MockProvider for analysis');
     

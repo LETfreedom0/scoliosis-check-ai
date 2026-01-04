@@ -1,4 +1,4 @@
-import { AnalysisResult, ModelInput, ModelProvider } from './types';
+import { AnalysisResult, ModelInput, ModelProvider, ChatMessage } from './types';
 import { SCOLIOSIS_ANALYSIS_PROMPT } from '@/lib/prompts';
 
 const API_KEY = process.env.ZHIPU_API_KEY || process.env.OPENAI_API_KEY || 'e4827cc596cb4f83b9071f9398a11976.WcY6UKgyAmk8QxmH';
@@ -9,6 +9,40 @@ export class ZhipuProvider implements ModelProvider {
 
   constructor(modelName: string = 'glm-4.6v') {
     this.modelName = modelName;
+  }
+
+  async chat(messages: ChatMessage[]): Promise<string> {
+    if (!API_KEY) {
+      throw new Error('API Key is missing');
+    }
+
+    try {
+      console.log(`Calling Zhipu API Chat (${this.modelName})...`);
+      const response = await fetch(BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'glm-4-plus', // Use a text-optimized model for chat
+          messages: messages,
+          max_tokens: 2048,
+          temperature: 0.7,
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error(`ZhipuProvider Chat Error:`, error);
+      throw error;
+    }
   }
 
   async analyzeImage(input: ModelInput): Promise<AnalysisResult> {
@@ -66,22 +100,36 @@ export class ZhipuProvider implements ModelProvider {
     // Clean up markdown code blocks
     let jsonStr = content.replace(/```json/g, '').replace(/```/g, '').trim();
     
-    // Extract JSON object if there's extra text
-    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[0];
+    // Extract JSON object
+    const firstBrace = jsonStr.indexOf('{');
+    const lastBrace = jsonStr.lastIndexOf('}');
+    
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
     }
     
     try {
       const result = JSON.parse(jsonStr);
       // Validate result structure
-      if (!result.type || !result.score) {
-         throw new Error('Invalid response structure');
+      if (!result.type || result.score === undefined || result.score === null) {
+         throw new Error('Invalid response structure: missing type or score');
       }
       return result;
     } catch (e) {
       console.error('JSON Parse Error:', e);
-      throw new Error('Failed to parse AI response');
+      
+      // Try to repair common JSON errors (e.g. trailing commas)
+      try {
+        // Simple regex to remove trailing comma before closing brace
+        const fixedJson = jsonStr.replace(/,(\s*})/g, '$1');
+        const result = JSON.parse(fixedJson);
+        if (!result.type || result.score === undefined || result.score === null) {
+            throw new Error('Invalid response structure');
+        }
+        return result;
+      } catch (e2) {
+        throw new Error('Failed to parse AI response');
+      }
     }
   }
 }

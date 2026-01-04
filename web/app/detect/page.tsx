@@ -91,7 +91,7 @@ const GuideIllustrations = {
 };
 
 export default function DetectPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -174,7 +174,7 @@ export default function DetectPage() {
     setError(null);
 
     try {
-      const result = await analyzeImageWithAI(preview, undefined, analysisType);
+      const result = await analyzeImageWithAI(preview, undefined, analysisType, language);
       localStorage.setItem('scoliosis_result', JSON.stringify(result));
       
       // Save to history

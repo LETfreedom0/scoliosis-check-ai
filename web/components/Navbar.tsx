@@ -37,8 +37,8 @@ export function Navbar() {
             <Link href="/history" className={`font-medium transition-colors ${isActive('/history')}`}>
               {t('nav_history')}
             </Link>
-            <Link href="/knowledge" className={`font-medium transition-colors ${isActive('/knowledge')}`}>
-              {t('nav_knowledge')}
+            <Link href="/chat" className={`font-medium transition-colors ${isActive('/chat')}`}>
+              {t('nav_chat')}
             </Link>
             
             <div className="flex items-center gap-4">
@@ -106,8 +106,8 @@ export function Navbar() {
               <Link href="/history" className={`font-medium ${isActive('/history')}`} onClick={() => setIsMenuOpen(false)}>
                 {t('nav_history')}
               </Link>
-              <Link href="/knowledge" className={`font-medium ${isActive('/knowledge')}`} onClick={() => setIsMenuOpen(false)}>
-                {t('nav_knowledge')}
+              <Link href="/chat" className={`font-medium ${isActive('/chat')}`} onClick={() => setIsMenuOpen(false)}>
+                {t('nav_chat')}
               </Link>
               
               {user ? (

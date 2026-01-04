@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Brain, Zap, ShieldCheck, ArrowRight, Activity } from 'lucide-react';
+import { Brain, Zap, ShieldCheck, ArrowRight, Activity, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/Button';
 
@@ -81,15 +81,24 @@ export default function Home() {
               <Link href="/detect">
                 <Button 
                   size="lg"
-                  className="shadow-xl shadow-[#2c7a7b]/20 hover:shadow-2xl hover:shadow-[#2c7a7b]/30 transition-all hover:-translate-y-1 group"
+                  className="bg-gradient-to-r from-[#2c7a7b] to-[#319795] hover:from-[#319795] hover:to-[#38b2ac] border-0 shadow-xl shadow-[#2c7a7b]/30 hover:shadow-2xl hover:shadow-[#2c7a7b]/40 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden"
                 >
-                  {t('btn_start')}
-                  <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  <span className="relative z-10 flex items-center">
+                    {t('btn_start')}
+                    <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </Button>
               </Link>
-              <Link href="/knowledge">
-                <Button variant="secondary" size="lg">
-                  了解更多知识
+              <Link href="/chat">
+                <Button 
+                  variant="secondary" 
+                  size="lg"
+                  className="bg-white/80 backdrop-blur-sm border-gray-200 text-gray-700 hover:text-[#2c7a7b] hover:border-[#2c7a7b] shadow-lg hover:shadow-xl hover:bg-white transition-all duration-300 hover:-translate-y-1 group"
+                >
+                  <span className="flex items-center">
+                    <MessageCircle className="mr-2 w-5 h-5 text-[#2c7a7b] opacity-70 group-hover:opacity-100 transition-opacity" />
+                    {t('btn_advice')}
+                  </span>
                 </Button>
               </Link>
             </div>

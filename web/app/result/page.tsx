@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, AlertTriangle, CheckCircle, RefreshCw, FileText } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, RefreshCw, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/Button';
 import { AnalysisResult } from '@/lib/api';
@@ -72,61 +72,66 @@ export default function ResultPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="p-8 text-center border-b border-gray-100">
-          <div className="flex justify-center mb-6">
-            {statusInfo.icon}
-          </div>
-          
-          <span className={`inline-block px-4 py-1 rounded-full text-sm font-bold mb-4 ${statusInfo.color}`}>
-            {statusInfo.status}
-          </span>
-          
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-            {statusInfo.title}
-          </h1>
-          
-          <p className="text-gray-600 max-w-xl mx-auto leading-relaxed">
-            {statusInfo.desc}
-            {result.reason && (
-              <span className="block mt-4 text-sm bg-gray-50 p-3 rounded text-gray-700 italic">
-                AI 分析详情: {result.reason}
-              </span>
-            )}
-          </p>
-        </div>
-
-        <div className="p-8 bg-gray-50">
-          <h3 className="font-bold text-lg text-[#2c7a7b] mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {t('analysis_report')}
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="bg-white p-4 rounded border border-gray-200">
-              <span className="text-gray-500 block mb-1">{t('analysis_item')}</span>
-              <span className="font-medium text-gray-900">
-                {result.analysisType === 'xray' ? t('mode_xray') : t('analysis_item_val')}
-              </span>
+        <div className="p-6 md:p-8 border-b border-gray-100">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="mb-6">
+              {statusInfo.icon}
             </div>
             
-            <div className="bg-white p-4 rounded border border-gray-200">
-              <span className="text-gray-500 block mb-1">{t('analysis_model')}</span>
-              <span className="font-medium text-gray-900">GPT-4o Vision</span>
+            <span className={`inline-block px-4 py-1 rounded-full text-sm font-bold mb-4 ${statusInfo.color}`}>
+              {statusInfo.status}
+            </span>
+            
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+              {statusInfo.title}
+            </h1>
+          </div>
+          
+          <div className="space-y-4 max-w-xl mx-auto">
+            {/* Conclusion Card */}
+            <div className={`p-5 rounded-lg border ${
+              result.type === 'normal' ? 'bg-green-50 border-green-100' : 
+              result.type === 'warning' ? 'bg-yellow-50 border-yellow-100' : 
+              result.type === 'danger' ? 'bg-red-50 border-red-100' : 
+              'bg-gray-50 border-gray-100'
+            }`}>
+              <h3 className={`font-bold mb-2 ${
+                result.type === 'normal' ? 'text-green-800' : 
+                result.type === 'warning' ? 'text-yellow-800' : 
+                result.type === 'danger' ? 'text-red-800' : 
+                'text-gray-800'
+              }`}>
+                {t('result_conclusion')}
+              </h3>
+              <p className={`${
+                result.type === 'normal' ? 'text-green-900' : 
+                result.type === 'warning' ? 'text-yellow-900' : 
+                result.type === 'danger' ? 'text-red-900' : 
+                'text-gray-900'
+              } leading-relaxed`}>
+                {statusInfo.desc}
+              </p>
             </div>
 
-            {result.angle !== undefined && result.type !== 'invalid' && (
-              <div className="bg-white p-4 rounded border border-gray-200 md:col-span-2">
-                <span className="text-gray-500 block mb-1">{t('analysis_key_metric')}</span>
-                <span className="font-medium text-gray-900">Cobb Angle ≈ {result.angle}°</span>
+            {/* AI Reason Card */}
+            {result.reason && (
+              <div className="p-5 rounded-lg bg-blue-50 border border-blue-100">
+                <h3 className="font-bold text-blue-800 mb-2">
+                  {t('result_ai_details')}
+                </h3>
+                <p className="text-blue-900 text-sm leading-relaxed">
+                  {result.reason}
+                </p>
               </div>
             )}
-
+            
+            {/* Abnormal Indicators Card */}
             {result.abnormalIndicators && result.abnormalIndicators.length > 0 && (
-              <div className="bg-white p-4 rounded border border-gray-200 md:col-span-2">
-                <span className="text-gray-500 block mb-2">{t('abnormal_indicators')}</span>
+              <div className="p-5 rounded-lg bg-rose-50 border border-rose-100">
+                <h3 className="font-bold text-rose-800 mb-3">{t('abnormal_indicators')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {result.abnormalIndicators.map((indicator, index) => (
-                    <span key={index} className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded border border-red-100">
+                    <span key={index} className="px-3 py-1 bg-white text-rose-700 text-sm rounded-full border border-rose-200 shadow-sm">
                       {indicator}
                     </span>
                   ))}
@@ -141,8 +146,8 @@ export default function ResultPage() {
             <RefreshCw className="h-4 w-4" />
             {t('btn_retest')}
           </Button>
-          <Button onClick={() => router.push('/knowledge')} className="flex items-center justify-center gap-2">
-            <Activity className="h-4 w-4" />
+          <Button onClick={() => router.push('/chat')} className="flex items-center justify-center gap-2">
+            <MessageSquare className="h-4 w-4" />
             {t('btn_advice')}
           </Button>
         </div>

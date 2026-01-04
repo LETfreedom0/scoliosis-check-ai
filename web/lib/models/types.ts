@@ -20,8 +20,14 @@ export interface ModelInput {
   prompt?: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export interface ModelProvider {
   analyzeImage(input: ModelInput): Promise<AnalysisResult>;
+  chat(messages: ChatMessage[]): Promise<string>;
 }
 
 export type ModelProviderName = 'glm-4.6v' | 'glm-4.5v' | 'mock';
